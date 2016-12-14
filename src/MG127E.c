@@ -595,7 +595,10 @@ void BLE_Init(void)
     Uart_Send_String("\r\n");
 
     //clear all interrupt
-    SPI_Write_Reg(INT_FLAG|0X20, 0xff);
+	data_buf[0] = 0xff;
+    data_buf[1] = 0x80;
+    SPI_Write_Buffer(INT_FLAG, data_buf, 2);
+    
     //BLE Wakeup mode
     BLE_Mode_Wakeup();
 }
