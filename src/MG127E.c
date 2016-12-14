@@ -325,7 +325,7 @@ void BLE_Set_TimeOut(uint32_t data_us)
 *******************************************************************************/
 void BLE_Set_Xtal(uint8_t on_flag)
 {
-    SPI_Write_Reg(0x50, 0x51);
+    SPI_Write_Reg(0x50, 0x53);
     SPI_Write_Reg(0x3D, 0x18|(on_flag<<2));
 	SPI_Write_Reg(0x50, 0x56);
 }
@@ -411,18 +411,9 @@ void BLE_Init(void)
 
     SPI_Write_Reg(0x50, 0x51);
     BLE_Set_Xtal(0);
-    SPI_Write_Reg(0x50, 0x53);
-
-	//data_buf[0] = 0x8f;
-	//data_buf[1] = 0x80; //xocc
-	//SPI_Write_Buffer(0x14,data_buf,2);
-
-    //set BLE TX Power
-	data_buf[0] = 0x02;
-	data_buf[1] = BLE_TX_POWER;
-	SPI_Write_Buffer(0x0f,data_buf,2);
 
     do{
+	    SPI_Write_Reg(0x50, 0x53);
         data_buf[0] = 0;
         data_buf[1] = 0;
         data_buf[2] = 1;
@@ -537,6 +528,15 @@ void BLE_Init(void)
 
     SPI_Write_Reg(0x50, 0x53);
 
+	//data_buf[0] = 0x8f;
+	//data_buf[1] = 0x80; //xocc
+	//SPI_Write_Buffer(0x14,data_buf,2);
+
+    //set BLE TX Power
+	data_buf[0] = 0x02;
+	data_buf[1] = BLE_TX_POWER;
+	SPI_Write_Buffer(0x0f,data_buf,2);
+	
     data_buf[1] = SPI_Read_Reg(0x08);  //txgain
     if(0 == data_buf[1]){
       data_buf[1] = 0x11;
@@ -590,7 +590,7 @@ void BLE_Init(void)
     SPI_Write_Reg(0x50, 0x56);
 
 
-	Uart_Send_String("BLE_Beacon mode ");
+    Uart_Send_String("BLE_Beacon mode ");
     Uart_Send_Byte(Work_Mode-'0');
     Uart_Send_String("\r\n");
 
