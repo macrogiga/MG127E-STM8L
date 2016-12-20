@@ -298,7 +298,7 @@ void BLE_Set_TimeOut(uint32_t data_us)
 {
 	uint8_t temp0[3];
 
-	if(data_us < 10000)
+	if(data_us < 0x10000)
 	{
         temp0[0] = data_us & 0xff;
         temp0[1] = (data_us >> 8) & 0xff;
