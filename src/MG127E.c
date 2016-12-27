@@ -575,8 +575,7 @@ void BLE_Init(void)
     data_buf[1] = 0x07;
     SPI_Write_Buffer(0xE, data_buf, 2);
 
-
-    //calibration
+#if 0    //calibration
     SPI_Write_Reg(0x3F, 0x03);
     do{
         data_buf[0] = SPI_Read_Reg(0x1F);
@@ -586,7 +585,7 @@ void BLE_Init(void)
     do{
         data_buf[0] = SPI_Read_Reg(0x1F);
     }while(data_buf[0]&0x03);
-
+#endif
     SPI_Write_Reg(0x50, 0x56);
 
 
@@ -595,7 +594,7 @@ void BLE_Init(void)
     Uart_Send_String("\r\n");
 
     //clear all interrupt
-	data_buf[0] = 0xff;
+    data_buf[0] = 0xff;
     data_buf[1] = 0x80;
     SPI_Write_Buffer(INT_FLAG, data_buf, 2);
     
@@ -612,9 +611,9 @@ void BLE_Init(void)
 *******************************************************************************/
 void BLE_TRX(uint8_t txcnt, uint8_t rxcnt)
 {
-	uint8_t status = 0;
+    uint8_t status = 0;
     static uint8_t flag_pressed = 0;
-	uint8_t flag_tx = 1;
+    uint8_t flag_tx = 1;
     uint8_t cnt = txcnt;
     uint8_t len_pdu = 0;
     uint8_t loop = 0;
@@ -671,7 +670,7 @@ void BLE_TRX(uint8_t txcnt, uint8_t rxcnt)
                 BLE_Set_Xtal(0);
                 tick = CNT_SLEEP;
 
-				//BLE channel
+		//BLE channel
                 if (++ch > 39){
                     ch = 37;
                 }
@@ -731,5 +730,5 @@ void BLE_TRX(uint8_t txcnt, uint8_t rxcnt)
             }
             flag_pressed = 0;
         }
-	}
+    }
 }
