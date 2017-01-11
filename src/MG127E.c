@@ -360,6 +360,7 @@ static void BLE_Get_Pdu(uint8_t *ptr, uint8_t *len)
                 SPI_Read_Buffer(INITA_RX, &ptr[2+LEN_BLE_ADDR], LEN_BLE_ADDR);  //INITA
                 len_tmp -= LEN_BLE_ADDR;
             }
+	    len_tmp = 0;
             break;
         case ADV_SCAN_REQ:  //scanA + advA
             if(len_tmp == 12){
@@ -368,17 +369,19 @@ static void BLE_Get_Pdu(uint8_t *ptr, uint8_t *len)
                 SPI_Read_Buffer(ADVA_RX, &ptr[2+LEN_BLE_ADDR], LEN_BLE_ADDR);  //advA
                 len_tmp -= LEN_BLE_ADDR;
             }
+	    len_tmp = 0;
             break;
         case ADV_CONN_REQ:  //InitA + advA + LL(22B)
             if(len_tmp == 34){
                 SPI_Read_Buffer(INITA_RX, &ptr[2], LEN_BLE_ADDR);  //INITA
                 SPI_Read_Buffer(ADVA_RX, &ptr[2+LEN_BLE_ADDR], LEN_BLE_ADDR);  //advA
                 SPI_Read_Buffer(R_RX_PAYLOAD, &ptr[2+LEN_BLE_ADDR+LEN_BLE_ADDR], 22);
-                len_tmp = 0;
             }
+	    len_tmp = 0;
             break;
 */
         default:
+	    len_tmp = 0;
             break;
     }
 
@@ -389,13 +392,52 @@ static void BLE_Get_Pdu(uint8_t *ptr, uint8_t *len)
 
 
 
-uint8_t ch = 37;
+#define TXGAIN_DFF 17
+uint8_t txgain = TXGAIN_DFF;
+
+void BLE_Do_Cal()  //calibration
+{
+    uint8_t data_buf[2];
+
+    SPI_Write_Reg(0x3F, 0x03);
+    do{
+        data_buf[0] = SPI_Read_Reg(0x1F);
+    }while(data_buf[0]&0x03);
+
+    SPI_Write_Reg(0x3F, 0x03);
+    do{
+        data_buf[0] = SPI_Read_Reg(0x1F);
+    }while(data_buf[0]&0x03);
+
+    //////////////////////////////////////////////////
+    SPI_Write_Reg(0x35,0x01); //testm for tx/temp
+    SPI_Write_Reg(0x32,0xA0);
+    SPI_Write_Reg(0x2a,0x04);
+    SPI_Write_Reg(0x2a,0x00);
+
+    if(txgain < 17){
+        SPI_Write_Reg(0x32,0xFF);
+    }else if(txgain < 20){
+        SPI_Write_Reg(0x32,0x88);
+    }else{
+        SPI_Write_Reg(0x32,0x55);
+    }
+    data_buf[0] = 0x01;
+    data_buf[1] = 0x21;
+    SPI_Write_Buffer(0x13, data_buf, 2);
+    data_buf[0] = 0x01;
+    data_buf[1] = 0x20;
+    SPI_Write_Buffer(0x13, data_buf, 2);
+    SPI_Write_Reg(0x35,0x00);  //exist testm
+    ////////////////////////////////////////////////////
+    SPI_Write_Reg(0x50, 0x56);
+}
 
 /*******************************************************************************
 * Function   :     	BLE_Init
 * Parameter  :     	void
 * Returns    :     	void
-* Description:      power on .BLE must initnal reg .
+* Description:      power on .BLE must initialize reg .
 * Note:      : 		delay 30ms .
 *******************************************************************************/
 void BLE_Init(void)
@@ -410,10 +452,13 @@ void BLE_Init(void)
 	Uart_Send_String("BLE init \r\n");
 
     SPI_Write_Reg(0x50, 0x51);
-    BLE_Set_Xtal(0);
+    SPI_Write_Reg(0x50, 0x53);
+    SPI_Write_Reg(0x35, 0x00);
+    SPI_Write_Reg(0x3D, 0x18);
+    SPI_Write_Reg(0x50, 0x51);
 
     do{
-	    SPI_Write_Reg(0x50, 0x53);
+	SPI_Write_Reg(0x50, 0x53);
         data_buf[0] = 0;
         data_buf[1] = 0;
         data_buf[2] = 1;
@@ -514,7 +559,7 @@ void BLE_Init(void)
 #endif
 
     //set BLE TX default channel:37.38.39
-	SPI_Write_Reg(CH_NO|0X20, ch);
+	SPI_Write_Reg(CH_NO|0X20, 37);
 
 	//BLT FIFO write adv_data . max len:31 byte
 	SPI_Write_Buffer(W_TX_PAYLOAD, adv_wechat, sizeof(adv_wechat));
@@ -539,8 +584,9 @@ void BLE_Init(void)
 	
     data_buf[1] = SPI_Read_Reg(0x08);  //txgain
     if(0 == data_buf[1]){
-      data_buf[1] = 0x11;
+      data_buf[1] = TXGAIN_DFF;
     }
+    txgain = data_buf[1];
     data_buf[0] = 0xc0;
     data_buf[2] = 0x1D; // 1E, 20161212
     SPI_Write_Buffer(0x4, data_buf, 3);
@@ -558,7 +604,7 @@ void BLE_Init(void)
     SPI_Write_Reg(0x3E, 0x30);
 
     data_buf[0] = 0x10;
-    data_buf[1] = 0x03;
+    data_buf[1] = 0x02;
     SPI_Write_Buffer(0xA, data_buf, 2);
 
     data_buf[0] = 0x80;
@@ -575,19 +621,7 @@ void BLE_Init(void)
     data_buf[1] = 0x07;
     SPI_Write_Buffer(0xE, data_buf, 2);
 
-#if 0    //calibration
-    SPI_Write_Reg(0x3F, 0x03);
-    do{
-        data_buf[0] = SPI_Read_Reg(0x1F);
-    }while(data_buf[0]&0x03);
-
-    SPI_Write_Reg(0x3F, 0x03);
-    do{
-        data_buf[0] = SPI_Read_Reg(0x1F);
-    }while(data_buf[0]&0x03);
-#endif
-    SPI_Write_Reg(0x50, 0x56);
-
+    BLE_Do_Cal();
 
     Uart_Send_String("BLE_Beacon mode ");
     Uart_Send_Byte(Work_Mode-'0');
@@ -612,24 +646,25 @@ void BLE_Init(void)
 void BLE_TRX(uint8_t txcnt, uint8_t rxcnt)
 {
     uint8_t status = 0;
+    uint8_t ch = 37;
     static uint8_t flag_pressed = 0;
     uint8_t flag_tx = 1;
     uint8_t cnt = txcnt;
     uint8_t len_pdu = 0;
-    uint8_t loop = 0;
+//    uint8_t loop = 0;
 
     LED_RED_ON();
-	BLE_Set_TimeOut(0x7fff); //3fff-16,383us   7fff-32,767us
+    BLE_Set_TimeOut(0x7fff); //3fff-16,383us   7fff-32,767us
     tick = CNT_SLEEP;
 
-	while(1)
-	{
-		//BLE IRQ LOW
-		if (!BLE_IRQ_GET())
-		{
-			//clear interrupt flag
-			status = SPI_Read_Reg(INT_FLAG);
-			SPI_Write_Reg(INT_FLAG|0X20, status);
+    while(1)
+    {
+        //BLE IRQ LOW
+        if (!BLE_IRQ_GET())
+        {
+            //clear interrupt flag
+            status = SPI_Read_Reg(INT_FLAG);
+            SPI_Write_Reg(INT_FLAG|0X20, status);
 
             if(INT_TYPE_WAKEUP == status)//wakeup
             {
@@ -646,18 +681,18 @@ void BLE_TRX(uint8_t txcnt, uint8_t rxcnt)
                 }
             }
 
-			BLE_Mode_Sleep();
+            BLE_Mode_Sleep();
 
             if(INT_TYPE_PDU_OK & status){
                 LED_RED_ON();
                 BLE_Get_Pdu(rx_buf, &len_pdu);
-
+#if 0 //dbg print
                 Uart_Send_String("\r\n");
                 for(loop=0; loop<len_pdu; loop++){
                     Uart_Send_Byte(rx_buf[loop]);
                     Uart_Send_String(" ");
                 }
-
+#endif
             }else if(INT_TYPE_TX_START & status){
                 LED_GREEN_ON();
             }
