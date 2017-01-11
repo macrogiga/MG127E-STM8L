@@ -68,26 +68,26 @@ void main(void)
 
     while(1)
     {
-		//rx data . change work mode .
-		if((Rx_Tx_Buffer_Cnt == 1) && (Work_Mode == Work_Mode_Null))
-		{
-			Work_Mode = Rx_Buffer[0];
-			Rx_Buffer[0] = 0;
-			Rx_Tx_Buffer_Cnt = 0;
-		}
+        //rx data . change work mode .
+        if((Rx_Tx_Buffer_Cnt == 1) && (Work_Mode == Work_Mode_Null))
+        {
+            Work_Mode = Rx_Buffer[0];
+            Rx_Buffer[0] = 0;
+            Rx_Tx_Buffer_Cnt = 0;
+        }
 
 
-		switch(Work_Mode)
-		{
-			case Work_Mode_Null:
+        switch(Work_Mode)
+        {
+            case Work_Mode_Null:
 
-				break;
-			case Work_Mode_Help:
+                break;
+            case Work_Mode_Help:
 
-				for(temp0=0;temp0<LINE_DISP;temp0++)
-				{
-					Uart_Send_String(FunctionDisplay[temp0]);
-				}
+                for(temp0=0;temp0<LINE_DISP;temp0++)
+                {
+                    Uart_Send_String(FunctionDisplay[temp0]);
+                }
 
 				Uart_Send_String("\r\n");
 				Uart_Send_String("\r\n");
@@ -96,16 +96,16 @@ void main(void)
 				Uart_Send_String("\r\n");
 				Uart_Send_String("\r\n");
 #ifndef NO_HELP
-				Work_Mode = Work_Mode_Null;
+                Work_Mode = Work_Mode_Null;
 #else
                 Work_Mode = Work_Mode_iBeacon;
 #endif
-			break;
-			case Work_Mode_iBeacon:
-			case Work_Mode_Eddystone_Uri:
-			case Work_Mode_Eddystone_Uid:
-			case Work_Mode_Eddystone_Tlm:
-			case Work_Mode_Remote:
+                break;
+            case Work_Mode_iBeacon:
+            case Work_Mode_Eddystone_Uri:
+            case Work_Mode_Eddystone_Uid:
+            case Work_Mode_Eddystone_Tlm:
+            case Work_Mode_Remote:
                 /* IWDG configuration: IWDG is clocked by LSI = 38KHz */
                 /* IWDG timeout equal to 1.7 s (the timeout may varies due to LSI frequency dispersion) */
                 /* IWDG timeout = (RELOAD_VALUE + 1) * Prescaler / LSI = (254 + 1) * 256 / 38 000 = 1717.6 ms */
@@ -119,16 +119,20 @@ void main(void)
                 /* Refresh IWDG */
                 IWDG_ReloadCounter();
 
-				//BLE initnal
-				BLE_Init();
+                //BLE initnal
+                BLE_Init();
 
-                //rtx
+                //tx only
+                //BLE_TRX(3,0);
+                //rx only
+                //BLE_TRX(0,3);
+                //tx-rx-tx-...
                 BLE_TRX(3,3);
-			break;
+                break;
 
-			default:
-			break;
-		}
+            default:
+                break;
+        }
     }
 }
 
