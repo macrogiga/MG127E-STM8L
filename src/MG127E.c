@@ -246,14 +246,14 @@ uint8_t Eddystone_Tlm_adv_data[] = {
 *******************************************************************************/
 void BLE_Mode_Sleep(void)
 {
-	uint8_t	temp0[4];
+    uint8_t	temp0[4];
 
     temp0[0] = 0x02;
     temp0[1] = 0xff;
     temp0[2] = 0xff;
     temp0[3] = 0xff;
 
-	SPI_Write_Buffer(SLEEP_WAKEUP,temp0,4);
+    SPI_Write_Buffer(SLEEP_WAKEUP,temp0,4);
 }
 /*******************************************************************************
 * Function   :     	BLE_Mode_Wakeup
@@ -276,14 +276,14 @@ void BLE_Mode_Wakeup(void)
 *******************************************************************************/
 void BLE_Set_StartTime(uint32_t htime)
 {
-	uint8_t temp0[3];
-	uint32_t temp1 = htime;
+    uint8_t temp0[3];
+    uint32_t temp1 = htime;
 
     temp0[0] = temp1 & 0xFF;
     temp0[1] = (temp1>>8) & 0xFF;
     temp0[2] = (temp1>>16) & 0xFF;
 
-	SPI_Write_Buffer(START_TIME,temp0,3);
+    SPI_Write_Buffer(START_TIME,temp0,3);
 }
 
 
@@ -327,7 +327,7 @@ void BLE_Set_Xtal(uint8_t on_flag)
 {
     SPI_Write_Reg(0x50, 0x53);
     SPI_Write_Reg(0x3D, 0x18|(on_flag<<2));
-	SPI_Write_Reg(0x50, 0x56);
+    SPI_Write_Reg(0x50, 0x56);
 }
 
 static void BLE_Get_Pdu(uint8_t *ptr, uint8_t *len)
@@ -392,8 +392,7 @@ static void BLE_Get_Pdu(uint8_t *ptr, uint8_t *len)
 
 
 
-#define TXGAIN_DFF 17
-uint8_t txgain = TXGAIN_DFF;
+#define TXGAIN_DFF 19
 
 void BLE_Do_Cal()  //calibration
 {
@@ -415,13 +414,8 @@ void BLE_Do_Cal()  //calibration
     SPI_Write_Reg(0x2a,0x04);
     SPI_Write_Reg(0x2a,0x00);
 
-    if(txgain < 17){
-        SPI_Write_Reg(0x32,0xFF);
-    }else if(txgain < 20){
-        SPI_Write_Reg(0x32,0x88);
-    }else{
-        SPI_Write_Reg(0x32,0x55);
-    }
+    SPI_Write_Reg(0x32,0x88);
+
     data_buf[0] = 0x01;
     data_buf[1] = 0x21;
     SPI_Write_Buffer(0x13, data_buf, 2);
@@ -442,9 +436,9 @@ void BLE_Do_Cal()  //calibration
 *******************************************************************************/
 void BLE_Init(void)
 {
-	uint8_t status;
-	uint8_t data_buf[4];
-	uint8_t ble_Addr[6];
+    uint8_t status;
+    uint8_t data_buf[4];
+    uint8_t ble_Addr[6];
 
     LED_RED_ON();
 	Delay_ms(30);
@@ -478,22 +472,22 @@ void BLE_Init(void)
 
     LED_RED_OFF();
 
-	//read chip version
-   	status = SPI_Read_Reg(0x1e);
-	Uart_Send_String("chip version=");
-	Uart_Send_Byte(status);
-	Uart_Send_String("\r\n");
+    //read chip version
+    status = SPI_Read_Reg(0x1e);
+    Uart_Send_String("chip version=");
+    Uart_Send_Byte(status);
+    Uart_Send_String("\r\n");
 
 
-	SPI_Write_Reg(0X20, 0x78);//power down,tx, for hot reset
-	SPI_Write_Reg(0X26, 0x06);//1Mbps
+    SPI_Write_Reg(0X20, 0x78);//power down,tx, for hot reset
+    SPI_Write_Reg(0X26, 0x06);//1Mbps
     SPI_Write_Reg(0X20, 0x7a);//power up
 
     SPI_Write_Reg(0x50, 0x56);
 
     BLE_Mode_Sleep();
 
-	//read BLE address. BLE MAC Address
+    //read BLE address. BLE MAC Address
     SPI_Read_Buffer(0x08, ble_Addr, 6);
 
 	Uart_Send_String("BleAddr=");
@@ -586,9 +580,8 @@ void BLE_Init(void)
     if(0 == data_buf[1]){
       data_buf[1] = TXGAIN_DFF;
     }
-    txgain = data_buf[1];
     data_buf[0] = 0xc0;
-    data_buf[2] = 0x1D; // 1E, 20161212
+    data_buf[2] = 0x1D; 
     SPI_Write_Buffer(0x4, data_buf, 3);
 
 
@@ -733,7 +726,7 @@ void BLE_TRX(uint8_t txcnt, uint8_t rxcnt)
                 }
             }
 
-		}
+	}
         else{
             if(tick == 0){
                 BLE_Set_Xtal(1);
