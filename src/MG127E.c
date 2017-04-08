@@ -2,7 +2,7 @@
   ******************************************************************************
   * @file    :Main.c
   * @author  :MG Team
-  * @version :V1.0
+  * @version :V1.1
   * @date
   * @brief
   ******************************************************************************
@@ -676,7 +676,7 @@ void BLE_TRX(uint8_t txcnt, uint8_t rxcnt)
 
             BLE_Mode_Sleep();
 
-            if(INT_TYPE_PDU_OK & status){
+            if(INT_TYPE_PDU_OK & status){  //for rx. no need in tx only application
                 LED_RED_ON();
                 BLE_Get_Pdu(rx_buf, &len_pdu);
 #if 0 //dbg print
@@ -686,7 +686,7 @@ void BLE_TRX(uint8_t txcnt, uint8_t rxcnt)
                     Uart_Send_String(" ");
                 }
 #endif
-            }else if(INT_TYPE_TX_START & status){
+            }else if(INT_TYPE_TX_START & status){  //for tx. no need in rx only application
                 LED_GREEN_ON();
             }
 
@@ -723,6 +723,9 @@ void BLE_TRX(uint8_t txcnt, uint8_t rxcnt)
                     }else{
                         cnt = rxcnt;
                     }
+			
+		    SPI_Write_Reg(0X50, 0x53);
+		    BLE_Do_Cal();
                 }
             }
 
